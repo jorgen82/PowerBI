@@ -136,11 +136,17 @@ grouped_data = GROUP data_filtered BY category;
 -- Calculate the maximum 'finalWorth' for each category
 max_finalWorth = FOREACH grouped_data {
     max_finalWorth_in_group = MAX(data_filtered.finalWorth);
-    max_finalWorth_record = FILTER data_filtered BY finalWorth == max_finalWorth_in_group;
-    max_finalWorth_personName = FOREACH max_finalWorth_record GENERATE FLATTEN(personName) AS max_finalWorth_personName;
-    max_finalWorth_personName_limited = LIMIT max_finalWorth_personName 1;
-    GENERATE group AS category, FLATTEN(max_finalWorth_personName_limited) AS max_finalWorth_personName;
+    GENERATE group AS category, max_finalWorth_in_group AS max_finalWorth;
 }
+
+-- Join the original data with the maximum finalWorth for each category
+joined_data = JOIN data_filtered BY category, max_finalWorth BY category;
+
+-- Filter out rows where finalWorth equals max_finalWorth
+filtered_data = FILTER joined_data BY finalWorth == max_finalWorth;
+
+-- Project category and personName
+final_result = FOREACH filtered_data GENERATE category, personName;
 
 -- Count the number of 'personName' in each category
 category_counts = FOREACH grouped_data GENERATE
