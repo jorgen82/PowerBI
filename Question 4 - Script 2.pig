@@ -139,17 +139,22 @@ max_finalWorth = FOREACH grouped_data {
     max_finalWorth_in_group = MAX(data_filtered.finalWorth);
 
     -- Filter the data to get the records with the maximum 'finalWorth' in the current group
-    max_finalWorth_records = FILTER data_filtered BY finalWorth == max_finalWorth_in_group;
+    --max_finalWorth_data = JOIN data_filtered BY (category, finalWorth), (GROUP data_filtered BY category, max_finalWorth_in_group) BY (group, max_finalWorth_in_group);
+    max_finalWorth_data = JOIN data_filtered BY (category, finalWorth), grouped_data BY (group, max_finalWorth_in_group);
 
     -- Project 'personName' from the filtered records
-    max_finalWorth_personNames = FOREACH max_finalWorth_records GENERATE personName;
+    max_finalWorth_personName = FOREACH max_finalWorth_data GENERATE FLATTEN(data_filtered.category) as category, FLATTEN(data_filtered.personName) as personName;
 
     -- Limit to one record if multiple records have the same maximum 'finalWorth'
-    max_finalWorth_personName = LIMIT max_finalWorth_personNames 1;
+    max_finalWorth_personName_limited = LIMIT max_finalWorth_personName 1;
 
     -- Generate the result
-    GENERATE FLATTEN(group) AS category, FLATTEN(max_finalWorth_personName) AS max_finalWorth_personName;
+    --GENERATE FLATTEN(group) AS category, FLATTEN(max_finalWorth_personName) AS max_finalWorth_personName;
+    GENERATE FLATTEN(max_finalWorth_personName_limited);
 }
+
+
+
 
 -- Count the number of 'personName' in each category
 category_counts = FOREACH grouped_data GENERATE
@@ -176,3 +181,64 @@ final_result = JOIN category_percentage BY category, category_average BY categor
 
 -- Store the results
 STORE final_result INTO 'output_path';
+
+
+
+
+---- category
+-- category pct over total worth
+---- count of billionaires
+---- total final Worth per category
+-- avg of woth per category
+-- richest per category
+
+-- sum worth per category
+-- sum worth
+
+
+-- max final Worth
+
+
+
+
+DEFINE CSVLoader org.apache.pig.piggybank.storage.CSVLoader();
+-- Load the CSV dataset
+data = LOAD '/big_data_management/billionaire.csv' USING CSVLoader() AS (rank:int, finalWorth:int, category:chararray, personName:chararray);
+-- Filter out rows where finalWorth is null
+data_filtered = FILTER data BY finalWorth IS NOT NULL;
+-- Group the filtered data by 'category'
+grouped_data = GROUP data_filtered BY category;
+
+
+total_finalWorth = FOREACH (GROUP data_filtered ALL) GENERATE SUM(data_filtered.finalWorth) as total_finalWorth;
+
+max_finalWorth = FOREACH grouped_data {
+    max_finalWorth_in_group = MAX(data_filtered.finalWorth);
+    sum_finalWorth_in_group = SUM(data_filtered.finalWorth);
+    count_persons_in_group = COUNT(data_filtered.personName);
+    category_pct = (sum_finalWorth_in_group /  total_finalWorth::total_finalWorth) * 100;
+
+GENERATE group as category, FLATTEN(max_finalWorth_in_group) as max_finalWorth_in_group, FLATTEN(sum_finalWorth_in_group) as total_finalWorth_in_group, 
+    FLATTEN(count_persons_in_group) as count_pesronName, FLATTEN(category_pct) AS pct_over_total_finalWorth;
+}
+
+
+
+
+
+
+
+
+DEFINE CSVLoader org.apache.pig.piggybank.storage.CSVLoader();
+data = LOAD '/big_data_management/billionaire.csv' USING CSVLoader() AS (rank:int, finalWorth:int, category:chararray, personName:chararray);
+data_filtered = FILTER data BY finalWorth IS NOT NULL;
+grouped_data = GROUP data_filtered BY category;
+max_finalWorth = FOREACH grouped_data {
+    max_finalWorth_in_group = MAX(data_filtered.finalWorth);
+    max_finalWorth_data = JOIN data_filtered BY (category, finalWorth), (GROUP data_filtered BY (category, max_finalWorth_in_group)) BY (group, max_finalWorth_in_group);
+    --max_finalWorth_data = JOIN data_filtered BY (category, finalWorth), grouped_data BY (group, max_finalWorth_in_group);
+    max_finalWorth_personName = FOREACH max_finalWorth_data GENERATE FLATTEN(data_filtered.category) as category, FLATTEN(data_filtered.personName) as personName;
+    max_finalWorth_personName_limited = LIMIT max_finalWorth_personName 1;
+    GENERATE FLATTEN(max_finalWorth_personName_limited);
+}
+
