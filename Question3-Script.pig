@@ -9,7 +9,7 @@ data = LOAD 'hdfs://localhost:9000/assignment/billionaires.csv' USING CSVLoader(
 data = FILTER data by NOT rank is null;
 
 -- Filter out rows with blank country
-data = FILTER data BY country IS NOT NULL;
+data = FILTER data BY NOT country IS NULL AND NOT (country MATCHES '');
 
 -- Replace empty cpi_country with -999
 data = FOREACH data GENERATE country, finalWorth, (cpi_country is null ? -999 : cpi_country) as cpi_country;
