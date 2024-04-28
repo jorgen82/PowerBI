@@ -17,7 +17,8 @@ data = FOREACH data GENERATE country, finalWorth, (cpi_country is null ? -999 : 
 -- Group the countries
 grouped_countries = GROUP data BY country;
 
-values = FOREACH grouped_countries GENERATE group AS country, AVG(data.cpi_country) as cpi_country, SUM(data.finalWorth) AS total_worth;
+-- Calculate the results
+values = FOREACH grouped_countries GENERATE group AS country, AVG(data.cpi_country) as cpi_country, SUM(data.finalWorth) AS total_worth, COUNT(data.finalWorth) AS billionaires_count;
 
 STORE values INTO '/output/country_worth_cpi' USING PigStorage(',');
 
