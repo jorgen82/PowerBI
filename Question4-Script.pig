@@ -37,5 +37,8 @@ metrics_with_total = CROSS grouped_metrics, worth_total;
 -- Produce the final data, by calculating the category worth percentage as well
 final_data = FOREACH metrics_with_total GENERATE category, ((float)grouped_metrics::category_worth_total/(float)worth_total::total_worth) * 100 AS category_worth_pct, billionaires_count, category_worth_total, category_worth_average, top_billionaire;
 
+-- Order the data by pct
+final_data = ORDER final_data BY category_worth_pct DESC, billionaires_count DESC;
+
 -- Export the data
 STORE final_data INTO '/output/category_metrics' USING PigStorage(',');
