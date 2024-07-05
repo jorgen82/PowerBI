@@ -3,7 +3,7 @@ REGISTER 'hdfs://localhost:9000/pig/piggybank.jar';
 DEFINE CSVLoader org.apache.pig.piggybank.storage.CSVLoader();
 
 -- Load the CSV dataset
-data = LOAD '/assignment/billionaires.csv' USING CSVLoader() AS (rank:int, finalWorth:int, category:chararray, personName:chararray, age:int);
+data = LOAD 'hdfs://localhost:9000/assignment/billionaires.csv' USING CSVLoader() AS (rank:int, finalWorth:int, category:chararray, personName:chararray, age:int);
 
 -- Filter out headers
 data = FILTER data by NOT rank is null;

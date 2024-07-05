@@ -12,10 +12,10 @@ data = FILTER data by NOT rank is null;
 data = FILTER data BY NOT country IS NULL AND NOT (country MATCHES '');
 
 -- Filter out rows with blank country cpi
-data = FILTER data BY NOT cpi_country IS NULL;
+--data = FILTER data BY NOT cpi_country IS NULL;
 
 -- Replace empty cpi_country with -999
---data = FOREACH data GENERATE country, finalWorth, (cpi_country is null ? -999 : cpi_country) as cpi_country;
+data = FOREACH data GENERATE country, finalWorth, (cpi_country is null ? -999 : cpi_country) as cpi_country;
 
 -- Group the countries
 grouped_countries = GROUP data BY country;
